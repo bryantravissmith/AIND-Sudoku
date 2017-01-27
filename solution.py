@@ -9,8 +9,8 @@ cols = digits
 unitlist = ([cross(rows,c) for c in cols]+\
 [cross(r,cols) for r in rows]+\
 [cross(rs, cs) for rs in ('ABC','DEF','GHI') for cs in ('123','456','789')])+\
-[[t[0]+t[1] for t in zip(rows,digits)]]+\
-[[t[0]+t[1] for t in zip(reversed(rows),digits)]]
+[["".join(t) for t in zip(rows,digits)]]+\
+[["".join(t) for t in zip(reversed(rows),digits)]]
 
 squares = cross(rows,cols)
 units = dict((s, [u for u in unitlist if s in u]) for s in squares)
@@ -37,7 +37,6 @@ def naked_twins(values):
 
     # Find all instances of naked twins
     inverse_values = dict()
-    vals = values.copy()
     for k, v in values.items():
         if(len(v)==2):
             inverse_values[v] = inverse_values.get(v, [])
@@ -72,15 +71,25 @@ def grid_values(grid):
 
 def display(values):
     """
-    Display the values as a 2-D grid.
+    Display the values as a 2-D grid in stdout from Norvig's Blog
     Args:
         values(dict): The sudoku in dictionary form
     """
-    print(values)
-    #for cell in values:
-    #    assign_value(values,cell,values[cell])
+    "Display these values as a 2-D grid."
+    width = 1+max(len(values[s]) for s in squares)
+    line = '+'.join(['-'*(width*3)]*3)
+    for r in rows:
+        print("".join(values[r+c].center(width)+('|' if c in '36' else '')
+                      for c in cols))
+        if r in 'CF': print(line)
+    print()
 
 def eliminate(values):
+     """
+    Elimiates options for cells if that options is a value in a peer cell
+    Args:
+        values(dict): The sudoku in dictionary form
+    """
     vals = values.copy()
     for cell in values:
         if len(values[cell]) > 1:
@@ -90,6 +99,12 @@ def eliminate(values):
     return vals
 
 def only_choice(values):
+    """
+    Sets a cell value to a digit if that cell is the only options for 
+    that digit
+    Args:
+        values(dict): The sudoku in dictionary form
+    """
     for unit in unitlist:
         for digit in '123456789':
             dplaces = [box for box in unit if digit in values[box]]
@@ -98,6 +113,13 @@ def only_choice(values):
     return values
 
 def reduce_puzzle(values):
+    """
+    Applies constrained propigation to the sudoku while it contiues to 
+    elimation options from cells through the application of elimation, 
+    only choice, and nake_twin.
+    Args:
+        values(dict): The sudoku in dictionary form
+    """
     solved_values = [box for box in values.keys() if len(values[box]) == 1]
     stalled = False
     while not stalled:
@@ -120,11 +142,23 @@ def reduce_puzzle(values):
     return values
 
 def solve(grid):
+    """
+    Converst a string representation of a sudou to a dictionary and solves
+    that soduku returning the solved sudoku in a dictionary form.
+    Args:
+        grid(string): The sudoku in dictionary form
+    """
     values = search(grid_values(grid))
-    print(values)
+    display(values)
     return values
 
 def search(values):
+    """
+    Recursive function for redusing and searching through all possible 
+    solutions to find the/a solution to the soduku
+    Args:
+        values(dict): The sudoku in dictionary form
+    """
     if values is None:
         return None
     # First, reduce the puzzle using the previous function
