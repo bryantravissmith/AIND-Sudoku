@@ -1,4 +1,20 @@
 assignments = []
+def cross(A, B):
+    "Cross product of elements in A and elements in B."
+    return [a+b for a in A for b in B]
+
+digits = '123456789'
+rows = 'ABCDEFGHI'
+cols = digits
+unitlist = ([cross(rows,c) for c in cols]+\
+[cross(r,cols) for r in rows]+\
+[cross(rs, cs) for rs in ('ABC','DEF','GHI') for cs in ('123','456','789')])+\
+[[t[0]+t[1] for t in zip(rows,digits)]]+\
+[[t[0]+t[1] for t in zip(reversed(rows),digits)]]
+
+squares = cross(rows,cols)
+units = dict((s, [u for u in unitlist if s in u]) for s in squares)
+peers = dict((s, set(sum(units[s],[]))-set([s])) for s in squares)
 
 def assign_value(values, box, value):
     """
@@ -20,11 +36,23 @@ def naked_twins(values):
     """
 
     # Find all instances of naked twins
-    # Eliminate the naked twins as possibilities for their peers
+    inverse_values = dict()
+    vals = values.copy()
+    for k, v in values.items():
+        if(len(v)==2):
+            inverse_values[v] = inverse_values.get(v, [])
+            inverse_values[v].append(k)
 
-def cross(A, B):
-    "Cross product of elements in A and elements in B."
-    pass
+    # Eliminate the naked twins as possibilities for their peers
+    for unit in unitlist:
+        for twin, cells in inverse_values.items():
+            if sum([1 for cell in cells if cell in unit]) == 2:
+                for cell in unit:
+                    if cell not in cells:
+                        for digit in twin:
+                            values[cell] = values[cell].replace(digit,"")
+    return values
+
 
 def grid_values(grid):
     """
@@ -36,7 +64,11 @@ def grid_values(grid):
             Keys: The boxes, e.g., 'A1'
             Values: The value in each box, e.g., '8'. If the box has no value, then the value will be '123456789'.
     """
-    pass
+    values = dict(zip(cross(rows,cols),grid))
+    for cell in values:
+        if values[cell] == '.':
+            values[cell] = '123456789'
+    return values
 
 def display(values):
     """
@@ -44,22 +76,81 @@ def display(values):
     Args:
         values(dict): The sudoku in dictionary form
     """
-    pass
+    print(values)
+    #for cell in values:
+    #    assign_value(values,cell,values[cell])
 
 def eliminate(values):
-    pass
+    vals = values.copy()
+    for cell in values:
+        if len(values[cell]) > 1:
+            for peer in peers[cell]:
+                if len(values[peer]) == 1:
+                    vals[cell] = vals[cell].replace(values[peer],"")
+    return vals
 
 def only_choice(values):
-    pass
+    for unit in unitlist:
+        for digit in '123456789':
+            dplaces = [box for box in unit if digit in values[box]]
+            if len(dplaces) == 1:
+                values[dplaces[0]] = digit
+    return values
 
 def reduce_puzzle(values):
-    pass
+    solved_values = [box for box in values.keys() if len(values[box]) == 1]
+    stalled = False
+    while not stalled:
+        # Check how many boxes have a determined value
+        solved_values_before = len([box for box in values.keys() if len(values[box]) == 1])
+
+        # Your code here: Use the Eliminate Strategy
+        values = eliminate(values)
+        # Your code here: Use the Only Choice Strategy
+        values = only_choice(values)
+        # Add Naked twi
+        values = naked_twins(values)
+        # Check how many boxes have a determined value, to compare
+        solved_values_after = len([box for box in values.keys() if len(values[box]) == 1])
+        # If no new values were added, stop the loop.
+        stalled = solved_values_before == solved_values_after
+        # Sanity check, return False if there is a box with zero available values:
+        if len([box for box in values.keys() if len(values[box]) == 0]):
+            return False
+    return values
 
 def solve(grid):
-    pass
+    values = search(grid_values(grid))
+    print(values)
+    return values
 
 def search(values):
-    pass
+    if values is None:
+        return None
+    # First, reduce the puzzle using the previous function
+    values = reduce_puzzle(values)
+    
+    if values:
+        if sum([len(v) for v in list(values.values())])==81:
+            return values
+        
+    # Chose one of the unfilled square s with the fewest possibilities
+        min_len = min([len(a) for a in list(values.values()) if len(a) != 1])
+        final_cell = None
+        for cell in values:
+            if len(values[cell])==min_len:
+                final_cell = cell
+                break
+    
+    # Now use recursion to solve each one of the resulting sudokus, and if one returns a value (not False), return that answer!
+        for val in values[final_cell]:
+            vals = values.copy()
+            vals[final_cell] = val
+            vals = search(vals)
+            if vals is not None:
+                return vals
+    
+    return None
 
 if __name__ == '__main__':
     diag_sudoku_grid = '2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3'
