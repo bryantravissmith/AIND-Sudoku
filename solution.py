@@ -45,8 +45,10 @@ def naked_twins(values):
     # Eliminate the naked twins as possibilities for their peers
     for unit in unitlist:
         for twin, cells in inverse_values.items():
+        	# Counts the number of cells witht he twin values in each unit
             if sum([1 for cell in cells if cell in unit]) == 2:
                 for cell in unit:
+                	# If cell is not a twin, remove the twin digits
                     if cell not in cells:
                         for digit in twin:
                             values[cell] = values[cell].replace(digit,"")
@@ -85,7 +87,7 @@ def display(values):
     print()
 
 def eliminate(values):
-     """
+    """
     Elimiates options for cells if that options is a value in a peer cell
     Args:
         values(dict): The sudoku in dictionary form
@@ -149,7 +151,7 @@ def solve(grid):
         grid(string): The sudoku in dictionary form
     """
     values = search(grid_values(grid))
-    display(values)
+    #display(values)
     return values
 
 def search(values):
@@ -188,7 +190,8 @@ def search(values):
 
 if __name__ == '__main__':
     diag_sudoku_grid = '2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3'
-    display(solve(grid_values(diag_sudoku_grid)))
+    display(grid_values(diag_sudoku_grid))
+    display(solve(diag_sudoku_grid))
 
     try:
         from visualize import visualize_assignments
